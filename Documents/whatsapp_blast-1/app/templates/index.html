@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Blast</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div>
+        <h2>WhatsApp Blast</h2>
+
+        <!-- Upload File Section -->
+        <h3>Upload CSV File</h3>
+        <input type="file" id="file-input" accept=".csv">
+        <button id="upload-button">Upload</button>
+        <p id="upload-status"></p>
+
+        <!-- Message Template Section -->
+        <h3>Message Template</h3>
+        <textarea id="message-template" rows="5" cols="40" placeholder="Type your message template here..."></textarea>
+
+        <!-- WhatsApp Login Section -->
+        <h3>Login to WhatsApp</h3>
+        <button id="whatsapp-login-button">Login with WhatsApp (Scan QR Code)</button>
+        <p id="login-status"></p>
+
+        <!-- Start Blasting Section -->
+        <button id="start-blasting-button" disabled>Start Blasting</button>
+    </div>
+
+    <script>
+        // Handle File Upload
+        $('#upload-button').click(function() {
+            var file = $('#file-input')[0].files[0];
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#upload-status').text(response.message);
+                    } else {
+                        $('#upload-status').text('Failed to upload file: ' + response.message);
+                    }
+                },
+                error: function(error) {
+                    $('#upload-status').text('Error: ' + error.responseText);
+                }
+            });
+        });
+
+        // Handle Start Blasting
+        $('#start-blasting-button').click(function() {
+            var messageTemplate = $('#message-template').val();
+            var filePath = $('#file-input')[0].files[0].name;
+
+            $.ajax({
+                url: '/start',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ file_path: filePath, message: messageTemplate }),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Blasting completed successfully');
+                    } else {
+                        alert('Failed to send messages: ' + response.message);
+                    }
+                },
+                error: function(error) {
+                    alert('Error: ' + error.responseText);
+                }
+            });
+        });
+
+        // Handle WhatsApp Login (Scan QR Code)
+        $('#whatsapp-login-button').click(function() {
+            $('#login-status').text('Please scan the QR code to login to WhatsApp Web.');
+            $.ajax({
+                url: '/login',
+                type: 'GET',
+                success: function(response) {
+                    $('#login-status').text('Logged in successfully!');
+                    $('#start-blasting-button').prop('disabled', false);  // Enable the start button after login
+                },
+                error: function(error) {
+                    $('#login-status').text('Login failed: ' + error.responseText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
